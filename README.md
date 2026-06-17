@@ -2,6 +2,8 @@
 
 Repeatable local development for [WordPress VIP Go](https://docs.wpvip.com/wordpress-skeleton/) repos using [DDEV](https://ddev.com/). Matches hosted VIP layout: repo-root `plugins/`, `themes/`, `client-mu-plugins/`, `vip-config/`, etc., with WordPress core in `wordpress/` and platform code in `mu-plugins/` (cloned, not committed).
 
+Repository: https://github.com/CloudCatch/ddev-wp-vip.git
+
 ## Prerequisites
 
 - [DDEV](https://ddev.com/get-started/) (v1.24+)
@@ -12,13 +14,13 @@ Repeatable local development for [WordPress VIP Go](https://docs.wpvip.com/wordp
 
 ```bash
 # Option A: clone and bootstrap in one go
-git clone <this-repo-url> my-new-site
+git clone https://github.com/CloudCatch/ddev-wp-vip.git my-new-site
 cd my-new-site
 chmod +x bin/*.sh
 ./bin/bootstrap.sh my-new-site
 
-# Option B: copy the directory, then bootstrap (name defaults to folder name)
-cp -R vip-ddev-template my-other-site
+# Option B: copy an existing checkout, then bootstrap (name defaults to folder name)
+cp -R ddev-wp-vip my-other-site
 cd my-other-site
 rm -rf .git   # if copying an existing checkout
 git init
@@ -116,5 +118,7 @@ Then set `docroot: wordpress` in `.ddev/config.yaml`, merge `config/vip-config.l
 Object cache uses hosted VIP wiring: `php-memcached` → `mu-plugins/drop-ins/object-cache.php`.
 
 ## GitHub template
+
+https://github.com/CloudCatch/ddev-wp-vip
 
 Mark this repository as a **Template repository** in GitHub settings, then use **Use this template** to create new projects with the same DDEV + VIP layout.
