@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+## Description: Update VIP platform mu-plugins from Automattic/vip-go-mu-plugins-built
+## Usage: vip-mu-plugins-update
+## Example: ddev vip-mu-plugins-update
+## Aliases: vip-mu-plugins
+
+set -euo pipefail
+
+exec "${DDEV_APPROOT}/bin/update-vip-mu-plugins.sh" "$@"

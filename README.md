@@ -30,10 +30,10 @@ git init
 1. Set the DDEV project name (and a unique `FILES_CLIENT_SITE_ID` for VIP Search)
 2. Clone [VIP platform mu-plugins](https://github.com/Automattic/vip-go-mu-plugins-built) into `mu-plugins/`
 3. Install DDEV memcached + elasticsearch add-ons (if missing)
-4. Copy `config/wp-config.php.sample` → `wordpress/wp-config.php`
+4. Copy `config/wp-config.php.sample` → `wordpress/wp-config.php` and `config/wp-config-ddev.php` → `wordpress/wp-config-ddev.php`
 5. Run `ddev start` and install WordPress core
 
-Default admin: **admin / admin** at `https://<project>.ddev.site/wp-admin/`
+Default admin: **vipgo / password** at `https://<project>.ddev.site/wp-admin/`
 
 ## Day-to-day commands
 
@@ -43,6 +43,23 @@ ddev wp plugin list
 ddev wp vip-search index --setup --skip-confirm   # optional, first time
 ddev stop
 ```
+
+## Update VIP platform mu-plugins
+
+Platform code in `mu-plugins/` is cloned from [vip-go-mu-plugins-built](https://github.com/Automattic/vip-go-mu-plugins-built) and gitignored. To pull the latest:
+
+```bash
+ddev vip-mu-plugins-update
+# alias: ddev vip-mu-plugins
+```
+
+Or without DDEV running:
+
+```bash
+./bin/update-vip-mu-plugins.sh
+```
+
+Override the source repo with `VIP_MU_PLUGINS_REPO` (same as `bin/vip-setup.sh`). Local changes in `mu-plugins/` are discarded on update.
 
 ## Repo layout (VIP skeleton)
 
@@ -67,6 +84,7 @@ DDEV bind-mounts the skeleton dirs into `wordpress/wp-content/` via `.ddev/docke
 | `./bin/bootstrap.sh [name]` | Fresh clone: configure, start, install everything |
 | `./bin/configure-project.sh [name]` | Rename DDEV project only (updates `config.yaml` + site ID) |
 | `./bin/vip-setup.sh` | Clone mu-plugins, DDEV add-ons, wp-config (idempotent) |
+| `./bin/update-vip-mu-plugins.sh` or `ddev vip-mu-plugins-update` | Pull latest VIP platform mu-plugins |
 | `./bin/install-wordpress.sh` | Download WP core + run install (requires `ddev start`) |
 
 ## Overlay onto an existing VIP skeleton

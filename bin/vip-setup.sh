@@ -35,14 +35,20 @@ install_wp_config() {
 	fi
 
 	mkdir -p "${WORDPRESS}"
-	if [[ -f "${WORDPRESS}/wp-config.php" ]]; then
+
+	if [[ ! -f "${WORDPRESS}/wp-config.php" ]]; then
+		cp "${WP_CONFIG_SAMPLE}" "${WORDPRESS}/wp-config.php"
+		echo "Copied config/wp-config.php.sample -> wordpress/wp-config.php"
+		echo "      Run 'ddev wp config shuffle-salts' after ddev start to generate keys."
+	else
 		echo "wordpress/wp-config.php already present"
-		return 0
 	fi
 
-	cp "${WP_CONFIG_SAMPLE}" "${WORDPRESS}/wp-config.php"
-	echo "Copied config/wp-config.php.sample -> wordpress/wp-config.php"
-	echo "      Run 'ddev wp config shuffle-salts' after ddev start to generate keys."
+	WP_CONFIG_DDEV="${ROOT}/config/wp-config-ddev.php"
+	if [[ -f "${WP_CONFIG_DDEV}" ]] && [[ ! -f "${WORDPRESS}/wp-config-ddev.php" ]]; then
+		cp "${WP_CONFIG_DDEV}" "${WORDPRESS}/wp-config-ddev.php"
+		echo "Copied config/wp-config-ddev.php -> wordpress/wp-config-ddev.php"
+	fi
 }
 
 if [[ -d "${MU_PLUGINS}/.git" ]] || [[ -f "${MU_PLUGINS}/000-vip-init.php" ]] || [[ -f "${MU_PLUGINS}/000-pre-vip-config/requires.php" ]]; then
