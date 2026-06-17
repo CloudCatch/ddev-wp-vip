@@ -114,11 +114,11 @@ overlay_ddev_tooling() {
 		fi
 	done
 
-	cp -n "${TEMPLATE_ROOT}/wp-cli.yml" "${target}/wp-cli.yml" 2>/dev/null || cp "${TEMPLATE_ROOT}/wp-cli.yml" "${target}/wp-cli.yml"
+	vip_common_copy_if_missing "${TEMPLATE_ROOT}/wp-cli.yml" "${target}/wp-cli.yml"
 
 	mkdir -p "${target}/client-mu-plugins"
-	cp -n "${TEMPLATE_ROOT}/client-mu-plugins/ddev-elasticsearch.php" "${target}/client-mu-plugins/" 2>/dev/null \
-		|| cp "${TEMPLATE_ROOT}/client-mu-plugins/ddev-elasticsearch.php" "${target}/client-mu-plugins/"
+	vip_common_copy_if_missing "${TEMPLATE_ROOT}/client-mu-plugins/ddev-elasticsearch.php" \
+		"${target}/client-mu-plugins/ddev-elasticsearch.php"
 
 	mkdir -p "${target}/vip-config"
 	if [[ ! -f "${target}/vip-config/vip-config-ddev.php" ]]; then
@@ -148,7 +148,8 @@ import_application_code() {
 	mkdir -p "${target}/config"
 	shopt -s nullglob
 	for f in "${source}"/config/.vip.*.yml; do
-		cp -n "${f}" "${target}/config/" 2>/dev/null || cp "${f}" "${target}/config/"
+		[[ -f "${f}" ]] || continue
+		vip_common_copy_if_missing "${f}" "${target}/config/$(basename "${f}")"
 	done
 	shopt -u nullglob
 

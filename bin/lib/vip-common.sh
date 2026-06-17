@@ -59,6 +59,16 @@ vip_common_attach_tty() {
 	exit 1
 }
 
+# macOS cp exits 1 when source and dest are identical; safe under set -e.
+vip_common_copy_if_missing() {
+	local src="$1" dest="$2"
+
+	[[ -f "${src}" ]] || return 0
+	if [[ ! -e "${dest}" ]]; then
+		cp "${src}" "${dest}"
+	fi
+}
+
 vip_common_prompt_choice() {
 	local prompt="$1" default="$2"
 	local reply
