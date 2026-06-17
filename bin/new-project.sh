@@ -51,7 +51,7 @@ run_wizard() {
 	project_name="$(vip_common_prompt_choice "DDEV project name (e.g. ctp-local)" "$(basename "$(pwd)")")"
 	project_name="$(vip_common_normalize_name "${project_name}")"
 
-	project_dir="$(vip_common_prompt_choice "Project directory" "${HOME}/Projects/${project_name}")"
+	project_dir="$(vip_common_prompt_choice "Project directory" "$(pwd)/${project_name}")"
 	project_dir="${project_dir/#\~/${HOME}}"
 
 	echo ""
