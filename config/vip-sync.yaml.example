@@ -5,7 +5,14 @@
 
 app: example-app
 env: develop
-remote_url: https://www.example.com
 
 # Optional: request a fresh backup before export (slower).
 # generate_backup: false
+
+# URL search-replace uses config/.vip.<app>.<env>.yml (VIP data sync config) when present.
+# See: https://docs.wpvip.com/databases/data-sync/config-file/
+# Fallback: VIP-CLI queries siteurl/home from the source environment.
+
+# Optional: hostname for missing uploads redirect (VIP dev-env --media-redirect-domain).
+# If omitted, inferred from production siteurl or data sync config.
+# media_redirect_domain: www.example.com

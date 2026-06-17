@@ -1,0 +1,12 @@
+# Example VIP data sync config (copy/rename for your application).
+#
+# Naming: .vip.<app>.<env>.yml  (see https://docs.wpvip.com/databases/data-sync/config-file/)
+# Example: config/.vip.example-app.develop.yml
+#
+# Order matters — list more specific domains before general ones.
+
+data_sync:
+  domain_map:
+    en.example.com: en-example-com-develop.go-vip.net
+    fr.example.com: fr-example-com-develop.go-vip.net
+    example.com: example-com-develop.go-vip.net

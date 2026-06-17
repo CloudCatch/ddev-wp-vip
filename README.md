@@ -77,14 +77,29 @@ Pull a database backup from a VIP Platform environment into local DDEV. This use
 
 ```bash
 ./bin/configure-vip-sync.sh
-# or: cp config/vip-sync.yaml.example config/vip-sync.yaml  (then edit)
+# or: cp config/vip-sync.yaml.example config/vip-sync.yaml  (then edit app/env)
 ```
 
-`config/vip-sync.yaml` is gitignored and stores:
+`config/vip-sync.yaml` is gitignored and stores only:
 
 - `app` — VIP application slug (e.g. `example-app`)
-- `env` — `develop`, `staging`, or `production`
-- `remote_url` — hosted site URL to search-replace (local URL is derived from DDEV)
+- `env` — source environment to export (`develop`, `staging`, `production`)
+
+**Search-replace (no manual site URL)**
+
+URLs are not prompted or stored in `vip-sync.yaml`. The sync command resolves them automatically:
+
+1. **Preferred:** [VIP data sync config](https://docs.wpvip.com/databases/data-sync/config-file/) at `config/.vip.<app>.<env>.yml` (same file VIP uses for production → non-production syncs). For non-production exports, domains in the exported DB are typically the `domain_map` *values*; for `production`, the *keys*. Order in the file is preserved (important for overlapping domains).
+2. **Fallback:** VIP-CLI queries `wp option get siteurl/home` and `wp site list` on `@app.env`.
+
+Add or copy a data sync config for your app (see [`config/.vip.example.develop.yml.example`](config/.vip.example.develop.yml.example)):
+
+```bash
+cp config/.vip.example.develop.yml.example config/.vip.my-app.develop.yml
+# edit domain_map for your network
+```
+
+Local URL is always derived from DDEV (`https://<project>.ddev.site`).
 
 **Sync**
 
@@ -112,6 +127,28 @@ ddev wp vip-search index --setup --skip-confirm
 - Exports are saved under `private/vip-sync/` (gitignored).
 - The imported database keeps VIP/production users; the local `vipgo` user only exists after a fresh `./bin/install-wordpress.sh` install.
 
+## Proxy missing media to VIP
+
+Like VIP dev-env [`--media-redirect-domain`](https://docs.wpvip.com/vip-local-development-environment/add-media-content/): local `/wp-content/uploads/` is checked first; missing files redirect to the VIP host (302).
+
+Requires `config/vip-sync.yaml`. Domain resolution order:
+
+1. `media_redirect_domain` in `config/vip-sync.yaml` (optional override)
+2. VIP-CLI `siteurl` on `@app.production`
+3. Primary domain from `config/.vip.<app>.<env>.yml` `domain_map`
+4. VIP-CLI `siteurl` on `@app.<env>`
+
+```bash
+ddev vip-media-proxy-update   # alias: ddev vip-media-proxy
+ddev restart                  # reload nginx
+```
+
+Runs automatically on `ddev start` (when `vip-sync.yaml` exists). Also runs at the end of `ddev vip-db-sync`.
+
+Generated config: `.ddev/nginx/vip-media-proxy.conf` (gitignored).
+
+**Limitation:** Same as VIP dev-env — does not work for multisite with Access-Controlled Files enabled.
+
 ## Repo layout (VIP skeleton)
 
 | Path | In git? | Purpose |
@@ -138,6 +175,7 @@ DDEV bind-mounts the skeleton dirs into `wordpress/wp-content/` via `.ddev/docke
 | `./bin/update-vip-mu-plugins.sh` or `ddev vip-mu-plugins-update` | Pull latest VIP platform mu-plugins |
 | `./bin/configure-vip-sync.sh` | Create `config/vip-sync.yaml` for DB sync |
 | `./bin/sync-vip-db.sh` or `ddev vip-db-sync` | Export VIP Platform DB and import into DDEV |
+| `./bin/update-vip-media-proxy.sh` or `ddev vip-media-proxy-update` | Nginx redirect for missing uploads |
 | `./bin/install-wordpress.sh` | Download WP core + run install (requires `ddev start`) |
 
 ## Overlay onto an existing VIP skeleton

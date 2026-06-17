@@ -10,3 +10,4 @@ upload_dirs:
 hooks:
   post-start:
     - exec: bash /var/www/html/.ddev/vip-post-start.sh
+    - exec-host: bash bin/update-vip-media-proxy.sh --quiet

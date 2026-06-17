@@ -4,11 +4,13 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CONFIG="${ROOT}/config/vip-sync.yaml"
-CONFIG_EXAMPLE="${ROOT}/config/vip-sync.yaml.example"
 
 SKIP_CONFIRM=false
 DRY_RUN=false
 GENERATE_BACKUP=""
+
+# Populated by build_search_replace_plan: one "from" domain/URL per line.
+SEARCH_REPLACE_FROM=()
 
 usage() {
 	cat <<EOF
@@ -22,7 +24,8 @@ Options:
   --dry-run              Show what would run without making changes
   -h, --help             Show this help
 
-Configure app/env/remote_url in config/vip-sync.yaml (see config/vip-sync.yaml.example).
+Configure app/env in config/vip-sync.yaml (see config/vip-sync.yaml.example).
+Search-replace uses config/.vip.<app>.<env>.yml when present, else VIP-CLI siteurl/home.
 EOF
 }
 
@@ -55,6 +58,143 @@ local_ddev_url() {
 	fi
 	name="$(grep -E '^name:' "${ROOT}/.ddev/config.yaml" | awk '{print $2}' | tr -d '\r')"
 	echo "https://${name:-localhost}.ddev.site"
+}
+
+find_vip_data_sync_config() {
+	local app="$1" env="$2"
+	local exact="${ROOT}/config/.vip.${app}.${env}.yml"
+	local match
+
+	if [[ -f "${exact}" ]]; then
+		echo "${exact}"
+		return 0
+	fi
+
+	match="$(find "${ROOT}/config" -maxdepth 1 -name ".vip.${app}.${env}.*.yml" 2>/dev/null | head -1 || true)"
+	if [[ -n "${match}" ]]; then
+		echo "${match}"
+		return 0
+	fi
+
+	return 1
+}
+
+# Print domain_map pairs (from<TAB>to) in file order.
+parse_domain_map() {
+	local file="$1"
+	ruby -ryaml -rpathname -e '
+		path = Pathname.new(ARGV[0])
+		data = YAML.load_file(path)
+		map = data&.dig("data_sync", "domain_map")
+		unless map.is_a?(Hash) && !map.empty?
+			warn "ERROR: #{path} missing data_sync.domain_map"
+			exit 1
+		end
+		map.each { |from, to| puts "#{from}\t#{to}" }
+	' "${file}"
+}
+
+vip_wp() {
+	local app="$1" env="$2"
+	shift 2
+	vip "@${app}.${env}" --yes -- wp "$@"
+}
+
+# Add unique entry to SEARCH_REPLACE_FROM.
+add_replace_from() {
+	local candidate="$1"
+	local existing
+	candidate="${candidate%/}"
+	[[ -z "${candidate}" ]] && return 0
+	if [[ ${#SEARCH_REPLACE_FROM[@]} -gt 0 ]]; then
+		for existing in "${SEARCH_REPLACE_FROM[@]}"; do
+			if [[ "${existing}" == "${candidate}" ]]; then
+				return 0
+			fi
+		done
+	fi
+	SEARCH_REPLACE_FROM+=("${candidate}")
+}
+
+infer_urls_from_vip_cli() {
+	local app="$1" env="$2"
+	local siteurl home url
+
+	echo "Querying VIP-CLI for site URLs on @${app}.${env} ..." >&2
+
+	siteurl="$(vip_wp "${app}" "${env}" option get siteurl 2>/dev/null | tr -d '\r' || true)"
+	home="$(vip_wp "${app}" "${env}" option get home 2>/dev/null | tr -d '\r' || true)"
+
+	add_replace_from "${siteurl}"
+	add_replace_from "${home}"
+
+	while IFS= read -r url; do
+		add_replace_from "${url}"
+	done < <(vip_wp "${app}" "${env}" site list --field=url --format=csv 2>/dev/null | tr -d '\r' || true)
+
+	if [[ ${#SEARCH_REPLACE_FROM[@]} -eq 0 ]]; then
+		echo "ERROR: Could not infer site URLs from VIP-CLI for @${app}.${env}."
+		echo "Add config/.vip.${app}.${env}.yml or check VIP-CLI access."
+		return 1
+	fi
+}
+
+build_search_replace_plan() {
+	local app="$1" env="$2"
+	local sync_config from to
+
+	SEARCH_REPLACE_FROM=()
+
+	if sync_config="$(find_vip_data_sync_config "${app}" "${env}")"; then
+		echo "Using VIP data sync config: ${sync_config#"${ROOT}/"}" >&2
+		while IFS=$'\t' read -r from to; do
+			[[ -z "${from}" || -z "${to}" ]] && continue
+			if [[ "${env}" == "production" ]]; then
+				add_replace_from "${from}"
+			else
+				add_replace_from "${to}"
+				add_replace_from "${from}"
+			fi
+		done < <(parse_domain_map "${sync_config}")
+	fi
+
+	if [[ ${#SEARCH_REPLACE_FROM[@]} -eq 0 ]]; then
+		if [[ -f "${ROOT}/config/.vip.${app}.${env}.yml" ]] || compgen -G "${ROOT}/config/.vip.${app}.${env}.*.yml" >/dev/null 2>&1; then
+			echo "ERROR: Found a data sync config but could not parse domain_map."
+			return 1
+		fi
+		echo "WARN: No config/.vip.${app}.${env}.yml found." >&2
+		echo "      Falling back to VIP-CLI siteurl/home inference." >&2
+		echo "      For multisite, add a data sync config:" >&2
+		echo "      https://docs.wpvip.com/databases/data-sync/config-file/" >&2
+		infer_urls_from_vip_cli "${app}" "${env}" || return 1
+	fi
+}
+
+apply_search_replace() {
+	local from="$1" to="$2"
+	local variants=() variant http_to http_from
+
+	variants+=("${from}")
+
+	if [[ "${from}" != http* ]]; then
+		variants+=("https://${from}" "http://${from}")
+	fi
+
+	if [[ "${from}" == https://* ]]; then
+		variants+=("${from/https:\/\//http://}")
+	fi
+
+	for variant in "${variants[@]}"; do
+		[[ -z "${variant}" ]] && continue
+		if [[ "${variant}" == http://* ]]; then
+			http_from="${variant}"
+			http_to="${to/https:\/\//http://}"
+			ddev wp search-replace "${http_from}" "${http_to}" --skip-columns=guid --all-tables
+		else
+			ddev wp search-replace "${variant}" "${to}" --skip-columns=guid --all-tables
+		fi
+	done
 }
 
 while [[ $# -gt 0 ]]; do
@@ -108,10 +248,9 @@ fi
 
 APP="$(yaml_value app "${CONFIG}")"
 ENV="$(yaml_value env "${CONFIG}")"
-REMOTE_URL="$(yaml_value remote_url "${CONFIG}")"
 
-if [[ -z "${APP}" || -z "${ENV}" || -z "${REMOTE_URL}" ]]; then
-	echo "ERROR: config/vip-sync.yaml must set app, env, and remote_url."
+if [[ -z "${APP}" || -z "${ENV}" ]]; then
+	echo "ERROR: config/vip-sync.yaml must set app and env."
 	exit 1
 fi
 
@@ -120,8 +259,11 @@ if [[ -z "${GENERATE_BACKUP}" ]] && yaml_bool generate_backup "${CONFIG}"; then
 fi
 
 LOCAL_URL="$(local_ddev_url)"
-REMOTE_URL="${REMOTE_URL%/}"
 LOCAL_URL="${LOCAL_URL%/}"
+
+if ! build_search_replace_plan "${APP}" "${ENV}"; then
+	exit 1
+fi
 
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
 DUMP_DIR="${ROOT}/private/vip-sync"
@@ -133,7 +275,11 @@ echo ""
 echo "Source:         vip ${VIP_TARGET} export sql"
 echo "Export file:    ${DUMP_FILE}"
 echo "Import target:  DDEV project $(grep -E '^name:' "${ROOT}/.ddev/config.yaml" | awk '{print $2}')"
-echo "Search-replace: ${REMOTE_URL} -> ${LOCAL_URL}"
+echo "Local URL:      ${LOCAL_URL}"
+echo "Search-replace (in order):"
+for from in "${SEARCH_REPLACE_FROM[@]}"; do
+	echo "  ${from} -> ${LOCAL_URL}"
+done
 if [[ "${GENERATE_BACKUP}" == true ]]; then
 	echo "Backup:         generate fresh backup on VIP before export"
 fi
@@ -173,15 +319,9 @@ echo "Importing into DDEV ..."
 ddev import-db --file="${DUMP_FILE}"
 
 echo "Updating URLs ..."
-ddev wp search-replace "${REMOTE_URL}" "${LOCAL_URL}" --skip-columns=guid --all-tables
-
-if [[ "${REMOTE_URL}" == https://* ]]; then
-	REMOTE_HTTP="${REMOTE_URL/https:\/\//http://}"
-	LOCAL_HTTP="${LOCAL_URL/https:\/\//http://}"
-	if [[ "${REMOTE_HTTP}" != "${REMOTE_URL}" ]]; then
-		ddev wp search-replace "${REMOTE_HTTP}" "${LOCAL_HTTP}" --skip-columns=guid --all-tables
-	fi
-fi
+for from in "${SEARCH_REPLACE_FROM[@]}"; do
+	apply_search_replace "${from}" "${LOCAL_URL}"
+done
 
 echo "Flushing cache ..."
 ddev wp cache flush
@@ -193,3 +333,7 @@ echo "Dump: ${DUMP_FILE}"
 echo ""
 echo "Optional: reindex Enterprise Search"
 echo "  ddev wp vip-search index --setup --skip-confirm"
+echo ""
+echo "Updating media proxy (missing uploads -> VIP) ..."
+"${ROOT}/bin/update-vip-media-proxy.sh"
+echo "Run ddev restart if the project was already running."

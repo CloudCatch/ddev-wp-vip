@@ -42,3 +42,6 @@
 
 # Per-project VIP sync source (copy from config/vip-sync.yaml.example)
 config/vip-sync.yaml
+
+# Generated nginx media redirect (bin/update-vip-media-proxy.sh)
+.ddev/nginx/vip-media-proxy.conf

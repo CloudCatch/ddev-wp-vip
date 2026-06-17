@@ -21,14 +21,12 @@ fi
 
 read -r -p "VIP application slug (app): " APP
 read -r -p "VIP environment [develop]: " ENV
-read -r -p "Remote site URL (production/staging): " REMOTE_URL
 
 ENV="${ENV:-develop}"
 APP="$(echo "${APP}" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9-]+/-/g; s/^-+|-+$//g')"
-REMOTE_URL="${REMOTE_URL%/}"
 
-if [[ -z "${APP}" || -z "${REMOTE_URL}" ]]; then
-	echo "ERROR: app and remote_url are required."
+if [[ -z "${APP}" ]]; then
+	echo "ERROR: app is required."
 	exit 1
 fi
 
@@ -38,7 +36,6 @@ cat >"${CONFIG}" <<EOF
 
 app: ${APP}
 env: ${ENV}
-remote_url: ${REMOTE_URL}
 
 # Optional: request a fresh backup before export (slower).
 # generate_backup: false
@@ -47,5 +44,12 @@ EOF
 echo ""
 echo "Wrote ${CONFIG}"
 echo ""
-echo "Review the file, then run:"
+echo "Add a VIP data sync config for search-replace (recommended for multisite):"
+echo "  config/.vip.${APP}.${ENV}.yml"
+echo "  See config/.vip.example.develop.yml.example"
+echo ""
+echo "Then run:"
 echo "  ddev vip-db-sync"
+echo ""
+echo "Media proxy (optional, after vip-sync.yaml exists):"
+echo "  ddev vip-media-proxy-update && ddev restart"

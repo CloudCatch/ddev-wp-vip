@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+## Description: Regenerate nginx media redirect config (VIP --media-redirect-domain)
+## Usage: vip-media-proxy-update
+## Example: ddev vip-media-proxy-update
+## Aliases: vip-media-proxy
+
+set -euo pipefail
+
+exec "${DDEV_APPROOT}/bin/update-vip-media-proxy.sh" "$@"
