@@ -1,14 +1,27 @@
 #!/usr/bin/env bash
-# One-command setup for a fresh clone: configure name, VIP mu-plugins, DDEV, WordPress.
+# One-command setup (non-interactive). For the questionnaire wizard use: ./bin/new-project.sh
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "${ROOT}"
 
+if [[ $# -eq 0 && -t 0 ]]; then
+	exec "${ROOT}/bin/new-project.sh"
+fi
+
 PROJECT_NAME="${1:-$(basename "${ROOT}")}"
+VIP_APP_SOURCE="${VIP_APP_SOURCE:-}"
 
 echo "=== VIP + DDEV bootstrap: ${PROJECT_NAME} ==="
 echo ""
+
+if [[ -z "${VIP_APP_SOURCE}" && -t 0 ]]; then
+	read -r -p "VIP application repo to import (git URL, local path, or Enter to skip): " VIP_APP_SOURCE || true
+fi
+
+if [[ -n "${VIP_APP_SOURCE}" ]]; then
+	"${ROOT}/bin/integrate-vip-app.sh" --source "${VIP_APP_SOURCE}" --yes "${ROOT}"
+fi
 
 "${ROOT}/bin/configure-project.sh" "${PROJECT_NAME}"
 "${ROOT}/bin/vip-setup.sh"

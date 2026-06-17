@@ -27,12 +27,12 @@ fi
 
 # Stable per-project site ID for VIP Search index names (vip-{id}-*).
 SITE_ID="$(( 200000 + $(echo -n "${NAME}" | cksum | awk '{print $1}') % 800000 ))"
-VIP_CONFIG="${ROOT}/vip-config/vip-config.php"
-if [[ -f "${VIP_CONFIG}" ]]; then
+VIP_CONFIG_DDEV="${ROOT}/vip-config/vip-config-ddev.php"
+if [[ -f "${VIP_CONFIG_DDEV}" ]]; then
 	if [[ "${OSTYPE}" == darwin* ]]; then
-		sed -i '' "s/define( 'FILES_CLIENT_SITE_ID', [0-9]* );/define( 'FILES_CLIENT_SITE_ID', ${SITE_ID} );/" "${VIP_CONFIG}"
+		sed -i '' "s/define( 'FILES_CLIENT_SITE_ID', [0-9]* );/define( 'FILES_CLIENT_SITE_ID', ${SITE_ID} );/" "${VIP_CONFIG_DDEV}"
 	else
-		sed -i "s/define( 'FILES_CLIENT_SITE_ID', [0-9]* );/define( 'FILES_CLIENT_SITE_ID', ${SITE_ID} );/" "${VIP_CONFIG}"
+		sed -i "s/define( 'FILES_CLIENT_SITE_ID', [0-9]* );/define( 'FILES_CLIENT_SITE_ID', ${SITE_ID} );/" "${VIP_CONFIG_DDEV}"
 	fi
 fi
 

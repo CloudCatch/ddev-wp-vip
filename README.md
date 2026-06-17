@@ -10,32 +10,65 @@ Repository: https://github.com/CloudCatch/ddev-wp-vip.git
 - Git
 - Docker running
 
-## Spin up a new site (from this template)
+## Quick start (recommended)
+
+One-liner — run from anywhere (clones the template, then asks a few questions):
 
 ```bash
-# Option A: clone and bootstrap in one go
+curl -fsSL https://raw.githubusercontent.com/CloudCatch/ddev-wp-vip/main/bin/new-project.sh | bash
+```
+
+Or from an existing template clone:
+
+```bash
+git clone https://github.com/CloudCatch/ddev-wp-vip.git my-new-site
+cd my-new-site
+chmod +x bin/*.sh
+./bin/new-project.sh
+```
+
+The wizard asks for:
+
+- Project directory and DDEV site name
+- VIP app source: **clone git URL**, **existing local path**, or **empty skeleton**
+- VIP application slug + environment (auto-detected from `config/.vip.*.yml` when present)
+- Database: **sync from VIP** or **fresh WordPress install**
+
+Then it runs everything: integrate DDEV tooling, `vip-setup`, `ddev start`, database sync/install, and media proxy.
+
+Running `./bin/bootstrap.sh` with no arguments also launches the wizard.
+
+### Manual / advanced
+
+<details>
+<summary>Step-by-step (integrate, bootstrap, sync)</summary>
+
+#### Greenfield (empty skeleton)
+
+```bash
 git clone https://github.com/CloudCatch/ddev-wp-vip.git my-new-site
 cd my-new-site
 chmod +x bin/*.sh
 ./bin/bootstrap.sh my-new-site
-
-# Option B: copy an existing checkout, then bootstrap (name defaults to folder name)
-cp -R ddev-wp-vip my-other-site
-cd my-other-site
-rm -rf .git   # if copying an existing checkout
-git init
-./bin/bootstrap.sh
 ```
 
-`bootstrap.sh` will:
+#### Existing VIP application repo (e.g. wpcomvip/compliancetrainingpartners-com)
 
-1. Set the DDEV project name (and a unique `FILES_CLIENT_SITE_ID` for VIP Search)
-2. Clone [VIP platform mu-plugins](https://github.com/Automattic/vip-go-mu-plugins-built) into `mu-plugins/`
-3. Install DDEV memcached + elasticsearch add-ons (if missing)
-4. Copy `config/wp-config.php.sample` → `wordpress/wp-config.php` and `config/wp-config-ddev.php` → `wordpress/wp-config-ddev.php`
-5. Run `ddev start` and install WordPress core
+```bash
+git clone git@github.com:wpcomvip/compliancetrainingpartners-com.git ctp-local
+git clone https://github.com/CloudCatch/ddev-wp-vip.git /tmp/ddev-wp-vip
+/tmp/ddev-wp-vip/bin/integrate-vip-app.sh ~/path/to/ctp-local
+cd ~/path/to/ctp-local
+./bin/configure-project.sh ctp-local
+./bin/vip-setup.sh && ddev start
+ddev vip-db-sync
+```
 
-Default admin: **vipgo / password** at `https://<project>.ddev.site/wp-admin/`
+**vip-config:** `vip-config/vip-config.php` is never overwritten. DDEV settings live in `vip-config/vip-config-ddev.php`.
+
+</details>
+
+Default admin (fresh install only): **vipgo / password** at `https://<project>.ddev.site/wp-admin/`
 
 ## Day-to-day commands
 
@@ -169,7 +202,9 @@ DDEV bind-mounts the skeleton dirs into `wordpress/wp-content/` via `.ddev/docke
 
 | Script | When to use |
 |--------|-------------|
-| `./bin/bootstrap.sh [name]` | Fresh clone: configure, start, install everything |
+| `./bin/new-project.sh` | **Interactive wizard** — recommended entry point |
+| `./bin/bootstrap.sh [name]` | Non-interactive setup (no args = launches wizard) |
+| `./bin/integrate-vip-app.sh [target]` | Add DDEV tooling to an existing VIP repo (or import app code with `--source`) |
 | `./bin/configure-project.sh [name]` | Rename DDEV project only (updates `config.yaml` + site ID) |
 | `./bin/vip-setup.sh` | Clone mu-plugins, DDEV add-ons, wp-config (idempotent) |
 | `./bin/update-vip-mu-plugins.sh` or `ddev vip-mu-plugins-update` | Pull latest VIP platform mu-plugins |
