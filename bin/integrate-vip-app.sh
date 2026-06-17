@@ -53,7 +53,7 @@ resolve_source_dir() {
 
 	if [[ "${src}" == git@* || "${src}" == http://* || "${src}" == https://* ]]; then
 		temp="$(mktemp -d)"
-		echo "Cloning ${src} ..."
+		echo "Cloning ${src} ..." >&2
 		git clone --depth 1 "${src}" "${temp}/repo"
 		echo "${temp}/repo"
 		return 0

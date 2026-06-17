@@ -26,7 +26,7 @@ ensure_template() {
 		return 0
 	fi
 
-	echo "Fetching DDEV VIP template ..."
+	echo "Fetching DDEV VIP template ..." >&2
 	local temp clone
 	temp="$(mktemp -d)"
 	clone="${temp}/ddev-wp-vip"
