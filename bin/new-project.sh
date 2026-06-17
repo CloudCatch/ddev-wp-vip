@@ -9,7 +9,15 @@
 set -euo pipefail
 
 TEMPLATE_REPO="${DDEV_VIP_TEMPLATE_REPO:-https://github.com/CloudCatch/ddev-wp-vip.git}"
-SCRIPT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+
+# curl ... | bash runs from stdin — no script path. Clone template and re-exec from disk.
+if [[ -z "${BASH_SOURCE[0]:-}" ]] || [[ ! -f "${BASH_SOURCE[0]}" ]]; then
+	echo "Fetching DDEV VIP template ..."
+	_bootstrap_temp="$(mktemp -d)"
+	git clone --depth 1 "${TEMPLATE_REPO}" "${_bootstrap_temp}/ddev-wp-vip"
+	chmod +x "${_bootstrap_temp}/ddev-wp-vip/bin/"*.sh 2>/dev/null || true
+	exec "${_bootstrap_temp}/ddev-wp-vip/bin/new-project.sh"
+fi
 
 ensure_template() {
 	local script_dir="$1"
@@ -202,13 +210,12 @@ run_wizard() {
 main() {
 	local script_dir template_root
 
-	script_dir="$(cd "$(dirname "${SCRIPT_PATH}")" && pwd)"
+	script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 	if [[ -f "${script_dir}/../.ddev/config.yaml" ]]; then
 		template_root="$(cd "${script_dir}/.." && pwd)"
 	else
 		template_root="$(ensure_template "${script_dir}")"
-		script_dir="${template_root}/bin"
 	fi
 
 	run_wizard "${template_root}"
