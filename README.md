@@ -54,14 +54,14 @@ chmod +x bin/*.sh
 ./bin/bootstrap.sh my-new-site
 ```
 
-#### Existing VIP application repo (e.g. wpcomvip/compliancetrainingpartners-com)
+#### Existing VIP application repo (e.g. wpcomvip/example)
 
 ```bash
-git clone git@github.com:wpcomvip/compliancetrainingpartners-com.git ctp-local
+git clone git@github.com:wpcomvip/example.git sample
 git clone https://github.com/CloudCatch/ddev-wp-vip.git /tmp/ddev-wp-vip
-/tmp/ddev-wp-vip/bin/integrate-vip-app.sh ~/path/to/ctp-local
-cd ~/path/to/ctp-local
-./bin/configure-project.sh ctp-local
+/tmp/ddev-wp-vip/bin/integrate-vip-app.sh ~/path/to/sample
+cd ~/path/to/sample
+./bin/configure-project.sh sample
 ./bin/vip-setup.sh && ddev start
 ddev vip-db-sync
 ```

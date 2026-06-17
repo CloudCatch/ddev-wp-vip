@@ -40,6 +40,42 @@ vip_common_normalize_name() {
 	echo "$1" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9-]+/-/g; s/^-+|-+$//g'
 }
 
+vip_common_abs_path() {
+	local path="$1"
+
+	path="${path/#\~/${HOME}}"
+	case "${path}" in
+		/*) printf '%s\n' "${path}" ;;
+		*) printf '%s\n' "$(pwd)/${path#./}" ;;
+	esac
+}
+
+# Always run ddev from the project root (never rely on caller cwd).
+vip_common_ddev() {
+	local root="$1"
+	shift
+	(cd "${root}" && ddev "$@")
+}
+
+# Start DDEV at root; if the name is registered elsewhere, unlist and retry.
+vip_common_ddev_start() {
+	local root="$1"
+	local name="${2:-}"
+
+	if vip_common_ddev "${root}" start; then
+		return 0
+	fi
+
+	if [[ -n "${name}" ]]; then
+		echo "WARN: DDEV name '${name}' may be registered at another path; re-registering ..." >&2
+		ddev stop --unlist "${name}" 2>/dev/null || true
+		vip_common_ddev "${root}" start
+		return $?
+	fi
+
+	return 1
+}
+
 vip_common_is_vip_app_repo() {
 	local dir="$1"
 	[[ -d "${dir}/plugins" || -d "${dir}/vip-config" || -d "${dir}/client-mu-plugins" ]]

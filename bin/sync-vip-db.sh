@@ -4,6 +4,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CONFIG="${ROOT}/config/vip-sync.yaml"
+cd "${ROOT}"
 
 SKIP_CONFIRM=false
 DRY_RUN=false

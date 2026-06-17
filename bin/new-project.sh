@@ -48,11 +48,11 @@ run_wizard() {
 	echo "=== VIP + DDEV — new project wizard ==="
 	echo ""
 
-	project_name="$(vip_common_prompt_choice "DDEV project name (e.g. ctp-local)" "$(basename "$(pwd)")")"
+	project_name="$(vip_common_prompt_choice "DDEV project name (e.g. sample)" "$(basename "$(pwd)")")"
 	project_name="$(vip_common_normalize_name "${project_name}")"
 
 	project_dir="$(vip_common_prompt_choice "Project directory" "$(pwd)/${project_name}")"
-	project_dir="${project_dir/#\~/${HOME}}"
+	project_dir="$(vip_common_abs_path "${project_dir}")"
 
 	echo ""
 	echo "VIP application code:"
@@ -71,7 +71,7 @@ run_wizard() {
 			;;
 		2)
 			local_path="$(vip_common_prompt_choice "Path to existing VIP repo" "")"
-			local_path="${local_path/#\~/${HOME}}"
+			local_path="$(vip_common_abs_path "${local_path}")"
 			if [[ ! -d "${local_path}" ]]; then
 				echo "ERROR: Directory not found: ${local_path}" >&2
 				exit 1
@@ -160,7 +160,6 @@ run_wizard() {
 	vip_common_write_sync_config "${target}" "${vip_app}" "${vip_env}"
 	echo "Wrote config/vip-sync.yaml"
 
-	cd "${target}"
 	"${target}/bin/configure-project.sh" "${project_name}"
 	"${target}/bin/vip-setup.sh"
 
@@ -169,7 +168,8 @@ run_wizard() {
 		exit 1
 	fi
 
-	ddev start
+	echo "Starting DDEV at ${target} ..."
+	vip_common_ddev_start "${target}" "${project_name}"
 
 	case "${db_mode}" in
 		1)
@@ -178,7 +178,7 @@ run_wizard() {
 				"${target}/bin/sync-vip-db.sh" --yes
 				"${target}/bin/update-vip-media-proxy.sh" || true
 				echo "Restarting DDEV to load media proxy nginx ..."
-				ddev restart
+				vip_common_ddev "${target}" restart
 			else
 				echo "WARN: vip CLI not found — skipped database sync."
 				echo "      Install: npm install -g @automattic/vip"
@@ -192,7 +192,7 @@ run_wizard() {
 	esac
 
 	local url
-	url="$(ddev exec printenv DDEV_PRIMARY_URL 2>/dev/null | tr -d '\r' || true)"
+	url="$(vip_common_ddev "${target}" exec printenv DDEV_PRIMARY_URL 2>/dev/null | tr -d '\r' || true)"
 	url="${url:-https://${project_name}.ddev.site}"
 
 	echo ""
