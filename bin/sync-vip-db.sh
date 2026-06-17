@@ -318,6 +318,9 @@ fi
 echo "Importing into DDEV ..."
 ddev import-db --file="${DUMP_FILE}"
 
+echo "Ensuring WordPress core is present ..."
+"${ROOT}/bin/ensure-wordpress-core.sh"
+
 echo "Updating URLs ..."
 for from in "${SEARCH_REPLACE_FROM[@]}"; do
 	apply_search_replace "${from}" "${LOCAL_URL}"

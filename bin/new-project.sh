@@ -174,6 +174,7 @@ run_wizard() {
 	case "${db_mode}" in
 		1)
 			if command -v vip >/dev/null 2>&1; then
+				"${target}/bin/ensure-wordpress-core.sh"
 				"${target}/bin/sync-vip-db.sh" --yes
 				"${target}/bin/update-vip-media-proxy.sh" || true
 				echo "Restarting DDEV to load media proxy nginx ..."
