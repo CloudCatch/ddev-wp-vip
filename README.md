@@ -15,8 +15,10 @@ Repository: https://github.com/CloudCatch/ddev-wp-vip.git
 One-liner — run from anywhere (clones the template, then asks a few questions):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/CloudCatch/ddev-wp-vip/main/bin/new-project.sh | bash
+curl -fsSL https://raw.githubusercontent.com/CloudCatch/ddev-wp-vip/main/bin/install.sh | bash
 ```
+
+(`install.sh` is a tiny bootstrap that clones from git — avoids GitHub raw CDN lag on `new-project.sh`.)
 
 Or from an existing template clone:
 

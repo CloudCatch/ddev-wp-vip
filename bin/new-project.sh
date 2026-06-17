@@ -2,7 +2,7 @@
 # Interactive wizard: spin up a new VIP + DDEV local project.
 #
 # One-liner (from anywhere):
-#   curl -fsSL https://raw.githubusercontent.com/CloudCatch/ddev-wp-vip/main/bin/new-project.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/CloudCatch/ddev-wp-vip/main/bin/install.sh | bash
 #
 # Or from a template clone:
 #   ./bin/new-project.sh
