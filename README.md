@@ -63,13 +63,62 @@ Or without DDEV running:
 
 Override the source repo with `VIP_MU_PLUGINS_REPO` (same as `bin/vip-setup.sh`). Local changes in `mu-plugins/` are discarded on update.
 
+## Sync database from VIP Platform
+
+Pull a database backup from a VIP Platform environment into local DDEV. This uses [`vip export sql`](https://docs.wpvip.com/vip-cli/commands/export/sql/) + `ddev import-db` (not `vip dev-env sync sql`, which targets VIP Local Dev Environment / Landono — see [VIP database sync docs](https://docs.wpvip.com/vip-local-development-environment/add-database-content/)).
+
+**Prerequisites**
+
+- [VIP-CLI](https://docs.wpvip.com/vip-cli/) installed and authenticated (`npm install -g @automattic/vip`, then `vip`)
+- Org admin or App admin role for the source VIP application/environment
+- DDEV project running (`ddev start`)
+
+**One-time setup**
+
+```bash
+./bin/configure-vip-sync.sh
+# or: cp config/vip-sync.yaml.example config/vip-sync.yaml  (then edit)
+```
+
+`config/vip-sync.yaml` is gitignored and stores:
+
+- `app` — VIP application slug (e.g. `example-app`)
+- `env` — `develop`, `staging`, or `production`
+- `remote_url` — hosted site URL to search-replace (local URL is derived from DDEV)
+
+**Sync**
+
+```bash
+ddev vip-db-sync
+# alias: ddev vip-sync-db
+```
+
+The command shows a summary and asks for confirmation before overwriting the local database. Flags:
+
+```bash
+ddev vip-db-sync --yes              # skip confirmation
+ddev vip-db-sync --generate-backup  # fresh VIP backup before export
+ddev vip-db-sync --dry-run          # preview only
+```
+
+After sync, optionally reindex Enterprise Search:
+
+```bash
+ddev wp vip-search index --setup --skip-confirm
+```
+
+**Notes**
+
+- Exports are saved under `private/vip-sync/` (gitignored).
+- The imported database keeps VIP/production users; the local `vipgo` user only exists after a fresh `./bin/install-wordpress.sh` install.
+
 ## Repo layout (VIP skeleton)
 
 | Path | In git? | Purpose |
 |------|---------|---------|
 | `.ddev/` | yes | DDEV + VIP bind mounts, add-ons, hooks |
 | `bin/` | yes | Bootstrap and setup scripts |
-| `config/` | yes | `wp-config` sample, elasticsearch + vip-config snippets |
+| `config/` | yes | `wp-config` sample, VIP sync config example, elasticsearch + vip-config snippets |
 | `client-mu-plugins/` | yes | Your always-on MU plugins |
 | `vip-config/` | yes | Environment constants (like hosted VIP) |
 | `plugins/`, `themes/` | placeholder only | Empty except `index.php`; add your code locally |
@@ -87,6 +136,8 @@ DDEV bind-mounts the skeleton dirs into `wordpress/wp-content/` via `.ddev/docke
 | `./bin/configure-project.sh [name]` | Rename DDEV project only (updates `config.yaml` + site ID) |
 | `./bin/vip-setup.sh` | Clone mu-plugins, DDEV add-ons, wp-config (idempotent) |
 | `./bin/update-vip-mu-plugins.sh` or `ddev vip-mu-plugins-update` | Pull latest VIP platform mu-plugins |
+| `./bin/configure-vip-sync.sh` | Create `config/vip-sync.yaml` for DB sync |
+| `./bin/sync-vip-db.sh` or `ddev vip-db-sync` | Export VIP Platform DB and import into DDEV |
 | `./bin/install-wordpress.sh` | Download WP core + run install (requires `ddev start`) |
 
 ## Overlay onto an existing VIP skeleton

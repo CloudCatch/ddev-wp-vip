@@ -39,3 +39,6 @@
 # Env secrets
 .env
 .env.*
+
+# Per-project VIP sync source (copy from config/vip-sync.yaml.example)
+config/vip-sync.yaml

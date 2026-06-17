@@ -1,0 +1,11 @@
+# VIP Platform database sync source (copy to config/vip-sync.yaml — gitignored).
+#
+# Used by: ddev vip-db-sync  (bin/sync-vip-db.sh)
+# Requires VIP-CLI: npm install -g @automattic/vip
+
+app: example-app
+env: develop
+remote_url: https://www.example.com
+
+# Optional: request a fresh backup before export (slower).
+# generate_backup: false

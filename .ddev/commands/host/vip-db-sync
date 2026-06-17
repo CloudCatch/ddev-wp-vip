@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+## Description: Export VIP Platform DB and import into local DDEV
+## Usage: vip-db-sync
+## Example: ddev vip-db-sync
+## Aliases: vip-sync-db
+
+set -euo pipefail
+
+exec "${DDEV_APPROOT}/bin/sync-vip-db.sh" "$@"
