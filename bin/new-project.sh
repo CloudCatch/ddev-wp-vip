@@ -39,6 +39,7 @@ run_wizard() {
 	local template_root="$1"
 	# shellcheck source=lib/vip-common.sh
 	source "${template_root}/bin/lib/vip-common.sh"
+	vip_common_attach_tty
 
 	local project_name project_dir source_mode git_url local_path
 	local vip_app vip_env db_mode default_app default_env detected target

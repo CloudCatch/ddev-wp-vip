@@ -45,6 +45,20 @@ vip_common_is_vip_app_repo() {
 	[[ -d "${dir}/plugins" || -d "${dir}/vip-config" || -d "${dir}/client-mu-plugins" ]]
 }
 
+# curl ... | bash leaves stdin on the pipe; reattach the controlling terminal for prompts.
+vip_common_attach_tty() {
+	if [[ -t 0 ]]; then
+		return 0
+	fi
+	if [[ -e /dev/tty ]]; then
+		exec </dev/tty
+		return 0
+	fi
+	echo "ERROR: Interactive wizard requires a terminal." >&2
+	echo "       Clone the repo and run: ./bin/new-project.sh" >&2
+	exit 1
+}
+
 vip_common_prompt_choice() {
 	local prompt="$1" default="$2"
 	local reply
