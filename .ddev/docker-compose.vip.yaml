@@ -1,0 +1,10 @@
+# VIP Go skeleton bind mounts (mirrors vip dev-env --app-code + --mu-plugins).
+services:
+  web:
+    volumes:
+      - ../mu-plugins:/var/www/html/wordpress/wp-content/mu-plugins:cached
+      - ../client-mu-plugins:/var/www/html/wordpress/wp-content/client-mu-plugins:cached
+      - ../plugins:/var/www/html/wordpress/wp-content/plugins:cached
+      - ../themes:/var/www/html/wordpress/wp-content/themes:cached
+      - ../vip-config:/var/www/html/wordpress/wp-content/vip-config:cached
+      - ../images:/var/www/html/wordpress/wp-content/images:cached

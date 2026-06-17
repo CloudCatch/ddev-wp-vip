@@ -1,0 +1,14 @@
+name: sandbox
+type: wordpress
+docroot: wordpress
+php_version: "8.3"
+webserver_type: nginx-fpm
+xdebug_enabled: false
+additional_hostnames: []
+additional_fqdns: []
+database:
+    type: mariadb
+    version: "11.8"
+use_dns_when_possible: true
+composer_version: "2"
+corepack_enable: false

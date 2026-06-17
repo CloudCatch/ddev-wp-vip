@@ -1,0 +1,41 @@
+# VIP platform mu-plugins (clone via bin/vip-setup.sh; do not commit)
+/mu-plugins/
+
+# WordPress core + generated runtime (see config/wp-config.php.sample)
+/wordpress/
+
+# Application code — add your own plugins/themes locally; template ships empty dirs
+/plugins/*
+!/plugins/index.php
+/themes/*
+!/themes/index.php
+
+# DDEV generated at runtime (tracked files live in .ddev/.gitignore)
+.ddev/.ddev-docker-compose-*.yaml
+.ddev/mutagen/
+.ddev/traefik/
+.ddev/.dbimageBuild/
+.ddev/.webimageBuild/
+.ddev/db_snapshots/
+
+# Runtime logs
+*.log
+
+# OS / editor / local tooling
+.DS_Store
+.idea/
+.vscode/
+.claude/
+
+# Dependencies (plugins/themes with their own builds)
+**/node_modules/
+**/vendor/
+
+# Archives / dumps
+*.zip
+*.sql
+*.sql.gz
+
+# Env secrets
+.env
+.env.*

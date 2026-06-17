@@ -1,0 +1,67 @@
+<?php
+/**
+ * WordPress configuration sample (DDEV + VIP Go local).
+ *
+ * Copy to wordpress/wp-config.php via bin/vip-setup.sh, then run:
+ *   ddev wp config shuffle-salts
+ *
+ * @package ddevapp
+ */
+
+/** Database charset to use in creating database tables. */
+define( 'DB_CHARSET', getenv( 'DB_CHARSET' ) ?: 'utf8' );
+
+/** The database collate type. Don't change this if in doubt. */
+define( 'DB_COLLATE', getenv( 'DB_COLLATE' ) ?: '' );
+
+/**
+ * Authentication unique keys and salts.
+ *
+ * @see https://api.wordpress.org/secret-key/1.1/salt/
+ * Replace placeholders before use, or run: ddev wp config shuffle-salts
+ */
+define( 'AUTH_KEY', 'change-me-auth-key' );
+define( 'SECURE_AUTH_KEY', 'change-me-secure-auth-key' );
+define( 'LOGGED_IN_KEY', 'change-me-logged-in-key' );
+define( 'NONCE_KEY', 'change-me-nonce-key' );
+define( 'AUTH_SALT', 'change-me-auth-salt' );
+define( 'SECURE_AUTH_SALT', 'change-me-secure-auth-salt' );
+define( 'LOGGED_IN_SALT', 'change-me-logged-in-salt' );
+define( 'NONCE_SALT', 'change-me-nonce-salt' );
+
+/* VIP Go local environment */
+define( 'VIP_GO_APP_ENVIRONMENT', getenv( 'VIP_GO_APP_ENVIRONMENT' ) ?: 'local' );
+
+define( 'DISALLOW_FILE_EDIT', true );
+define( 'DISALLOW_FILE_MODS', true );
+define( 'AUTOMATIC_UPDATER_DISABLED', true );
+define( 'WP_DEBUG', true );
+define( 'WP_DEBUG_LOG', true );
+define( 'WP_DEBUG_DISPLAY', false );
+
+// VIP Memcached (DDEV add-on service hostname: memcached)
+$memcached_servers = array(
+	'default' => array(
+		'memcached:11211',
+	),
+);
+
+if ( file_exists( __DIR__ . '/wp-content/mu-plugins/000-pre-vip-config/requires.php' ) ) {
+	require_once __DIR__ . '/wp-content/mu-plugins/000-pre-vip-config/requires.php';
+}
+
+if ( file_exists( __DIR__ . '/wp-content/vip-config/vip-config.php' ) ) {
+	require_once __DIR__ . '/wp-content/vip-config/vip-config.php';
+}
+
+/** Absolute path to the WordPress directory. */
+defined( 'ABSPATH' ) || define( 'ABSPATH', __DIR__ . '/' );
+
+$ddev_settings = __DIR__ . '/wp-config-ddev.php';
+if ( ! defined( 'DB_USER' ) && getenv( 'IS_DDEV_PROJECT' ) === 'true' && is_readable( $ddev_settings ) ) {
+	require_once $ddev_settings;
+}
+
+if ( file_exists( ABSPATH . '/wp-settings.php' ) ) {
+	require_once ABSPATH . '/wp-settings.php';
+}

@@ -1,0 +1,12 @@
+# WordPress VIP local development (merged with config.yaml).
+disable_settings_management: true
+
+web_environment:
+  - VIP_GO_APP_ENVIRONMENT=local
+
+upload_dirs:
+  - wp-content/uploads
+
+hooks:
+  post-start:
+    - exec: bash /var/www/html/.ddev/vip-post-start.sh
